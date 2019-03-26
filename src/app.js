@@ -5,9 +5,11 @@ const cors = require('cors')
 const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
 const foldersRouter = require('./folders/folders-router')
-const cardsRouter = require('./cards/cards-router')
+const notesRouter = require('./notes/notes-router')
+const NotesService = require('./notes/notes-service')
 
 const app = express()
+const jsonParser = express.json()
 
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
@@ -18,7 +20,7 @@ app.use(cors())
 app.use(helmet())
 
 app.use('/api/folders', foldersRouter)
-app.use('/api/cards', cardsRouter)
+app.use('/api/notes', notesRouter)
 
 app.get('/', (req, res) => {
   res.send('Hello, world!')
@@ -34,5 +36,9 @@ app.use(function errorHandler(error, req, res, next) {
   }
   res.status(500).json(response)
 })
+
+process.on('uncaughtException', function (err) {
+  console.log(err);
+});
 
 module.exports = app

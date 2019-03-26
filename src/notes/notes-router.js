@@ -1,27 +1,27 @@
 const path = require('path')
 const express = require('express')
 const xss = require('xss')
-const cardsService = require('./cards-service')
+const NotesService = require('./notes-service')
 
-const cardsRouter = express.Router()
+const notesRouter = express.Router()
 const jsonParser = express.json()
 
-cardsRouter
+notesRouter
     .route('/')
     .get((req, res, next) => {
-        CardsService.getAllCards(
+        NotesService.getAllNotes(
             req.app.get('db')
         )
-            .then(cards => {
-                res.json(cards)
+            .then(notes => {
+                res.json(notes)
             })
             .catch(next)
     })
     .post(jsonParser, (req, res, next) => {
-        const { title, folder_id, content } = req.body
-        const newCard = { title }
+        const { title, date_modified, folder, content } = req.body
+        const newNote = { title, date_modified, folder, content }
 
-        for (const [key, value] of Object.entries(newCard)) {
+        for (const [value] of Object.entries(newNote)) {
             if (value == null) {
                 return res.status(400).json({
                     error: { message: `Missing '${key}' in request body` }
@@ -29,46 +29,46 @@ cardsRouter
             }
         }
 
-        CardsService.insertCard(
+        NotesService.insertNote(
             req.app.get('db'),
-            newCard
+            newNote
         )
-            .then(card => {
+            .then(note => {
                 res
                     .status(201)
-                    .location(path.posix.join(req.originalUrl, `/${card.id}`))
-                    .json(card)
+                    .location(path.posix.join(req.originalUrl, `/${note.id}`))
+                    .json(note)
             })
             .catch(next)
     })
 
-cardsRouter
-    .route('/:card_id')
+notesRouter
+    .route('/:note_id')
     .all((req, res, next) => {
-        CardsService.getById(
+        NotesService.getById(
             req.app.get('db'),
-            req.params.card_id
+            req.params.note_id
         )
-            .then(card => {
-                if (!card) {
+            .then(note => {
+                if (!note) {
                     return res.status(404).json({
-                        error: { message: `Card doesn't exist` }
+                        error: { message: `note doesn't exist` }
                     })
                 }
-                res.card = card // save the card for the next middleware
+                res.note = note // save the note for the next middleware
                 next() // don't forget to call next so the next middleware happens!
             })
             .catch(next)
     })
 
     .get((req, res, next) => {
-        res.json(serializeCard(res.card))
+        res.json(res.note)
     })
 
     .delete((req, res, next) => {
-        CardsService.deleteCard(
+        NotesService.deleteNote(
             req.app.get('db'),
-            req.params.card_id
+            req.params.note_id
         )
             .then(() => {
                 res.status(204).end()
@@ -78,9 +78,9 @@ cardsRouter
 
     .patch(jsonParser, (req, res, next) => {
         const { title, folder_id, content } = req.body
-        const cardToUpdate = { title, folder_id, content }
+        const noteToUpdate = { title, folder_id, content }
 
-        const numberOfValues = Object.values(cardToUpdate).filter(Boolean).length
+        const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length
         if (numberOfValues === 0) {
             return res.status(400).json({
                 error: {
@@ -90,10 +90,10 @@ cardsRouter
         }
 
 
-        CardsService.updateCard(
+        NotesService.updateNote(
             req.app.get('db'),
-            req.params.card_id,
-            cardToUpdate
+            req.params.note_id,
+            noteToUpdate
         )
             .then(numRowsAffected => {
                 res.status(204).end()
@@ -102,4 +102,4 @@ cardsRouter
     })
 
 
-module.exports = cardsRouter
+module.exports = notesRouter

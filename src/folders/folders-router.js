@@ -1,7 +1,7 @@
 const path = require('path')
 const express = require('express')
 const xss = require('xss')
-const foldersService = require('./folders-service')
+const FoldersService = require('./folders-service')
 
 const foldersRouter = express.Router()
 const jsonParser = express.json()
@@ -62,7 +62,7 @@ foldersRouter
     })
 
     .get((req, res, next) => {
-        res.json(serializeFolder(res.folder))
+        res.json(res.folder)
     })
 
     .delete((req, res, next) => {
